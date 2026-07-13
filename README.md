@@ -43,11 +43,13 @@ Audit OS gives audit and accounting firms the workflow tooling that larger platf
 ### Installation
 
 ```bash
-git clone https://github.com/creova-gif/Audit-OS.git
-cd Audit-OS
+git clone https://github.com/creova-gif/audit-os.git
+cd audit-os
 pnpm install
 pnpm run build
 ```
+
+Run the app locally with `pnpm --filter @workspace/audit-os run dev` and the API server with `pnpm --filter @workspace/api-server run dev`.
 
 ---
 
