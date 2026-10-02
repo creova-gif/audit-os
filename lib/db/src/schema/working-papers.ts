@@ -10,6 +10,8 @@ export const workingPapersTable = pgTable("working_papers", {
   title: text("title").notNull(),
   aiDrafted: boolean("ai_drafted").notNull().default(false),
   contentText: text("content_text"),
+  aiDraftText: text("ai_draft_text"),
+  aiDraftStatus: text("ai_draft_status"),
   status: text("status").notNull().default("draft"),
   preparedBy: integer("prepared_by"),
   preparedAt: text("prepared_at"),

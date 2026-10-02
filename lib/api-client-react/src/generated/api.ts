@@ -2174,7 +2174,8 @@ export const useUpdateWorkingPaper = <
 };
 
 /**
- * @summary AI-draft content for a working paper
+ * Writes a blank template to aiDraftText. Does not call a model and does not modify contentText.
+ * @summary Store a template-only working paper draft for reviewer acceptance
  */
 export const getDraftWorkingPaperUrl = (id: number) => {
   return `/api/working-papers/${id}/draft`;
@@ -2235,7 +2236,7 @@ export type DraftWorkingPaperMutationResult = NonNullable<
 export type DraftWorkingPaperMutationError = ErrorType<ErrorResponse>;
 
 /**
- * @summary AI-draft content for a working paper
+ * @summary Store a template-only working paper draft for reviewer acceptance
  */
 export const useDraftWorkingPaper = <
   TError = ErrorType<ErrorResponse>,
@@ -2255,6 +2256,91 @@ export const useDraftWorkingPaper = <
   TContext
 > => {
   return useMutation(getDraftWorkingPaperMutationOptions(options));
+};
+
+/**
+ * Marks aiDraftStatus accepted for an active partner or manager. Does not copy aiDraftText into contentText.
+ * @summary Record reviewer acceptance of a template draft
+ */
+export const getAcceptWorkingPaperDraftUrl = (id: number) => {
+  return `/api/working-papers/${id}/draft/accept`;
+};
+
+export const acceptWorkingPaperDraft = async (
+  id: number,
+  options?: RequestInit,
+): Promise<WorkingPaper> => {
+  return customFetch<WorkingPaper>(getAcceptWorkingPaperDraftUrl(id), {
+    ...options,
+    method: "POST",
+  });
+};
+
+export const getAcceptWorkingPaperDraftMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof acceptWorkingPaperDraft>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof acceptWorkingPaperDraft>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  const mutationKey = ["acceptWorkingPaperDraft"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof acceptWorkingPaperDraft>>,
+    { id: number }
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return acceptWorkingPaperDraft(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AcceptWorkingPaperDraftMutationResult = NonNullable<
+  Awaited<ReturnType<typeof acceptWorkingPaperDraft>>
+>;
+
+export type AcceptWorkingPaperDraftMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Record reviewer acceptance of a template draft
+ */
+export const useAcceptWorkingPaperDraft = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof acceptWorkingPaperDraft>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof acceptWorkingPaperDraft>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  return useMutation(getAcceptWorkingPaperDraftMutationOptions(options));
 };
 
 /**

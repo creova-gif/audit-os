@@ -308,6 +308,16 @@ export interface WorkingPaper {
   aiDrafted: boolean;
   /** @nullable */
   contentText?: string | null;
+  /**
+   * Template-only draft. Not audit evidence and not the working paper body.
+   * @nullable
+   */
+  aiDraftText?: string | null;
+  /**
+   * pending_review or accepted. Acceptance does not copy the draft into contentText.
+   * @nullable
+   */
+  aiDraftStatus?: string | null;
   status: string;
   /** @nullable */
   preparedBy?: number | null;
@@ -356,7 +366,12 @@ export interface UpdateWorkingPaperBody {
 }
 
 export interface AiDraftResult {
+  /** Template-only draft stored in aiDraftText. Not written to contentText. */
   content: string;
+  aiDraftText: string;
+  aiDraftStatus: string;
+  requiresReviewerAcceptance: boolean;
+  updatedPaper?: WorkingPaper;
 }
 
 export interface DataRoomItem {
