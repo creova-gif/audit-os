@@ -1,0 +1,28 @@
+name: audit-os
+owner: creova-gif
+
+stack:
+  language: ["typescript"]
+  framework: []
+
+skill_groups:
+  default: [engineering, product]
+  conditional:
+    design: [ui-ux]
+    security: [security]
+
+# null = no command detected -> agents must report NOT VERIFIED for that gate
+verification:
+  install: "pnpm install"
+  lint: null
+  typecheck: "pnpm run typecheck"
+  test: null
+  build: "pnpm run build"
+
+integrations:
+  github: true
+  linear: false   # set true once the Linear connector is authorized
+
+agent_runtime:
+  required: false
+  preferred: null
