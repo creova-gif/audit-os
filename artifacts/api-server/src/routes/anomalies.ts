@@ -4,6 +4,7 @@ import { anomaliesTable } from "@workspace/db/schema";
 import { eq, and } from "drizzle-orm";
 import { CreateAnomalyBody, UpdateAnomalyBody } from "@workspace/api-zod";
 import { anthropic } from "@workspace/integrations-anthropic-ai";
+import { AiLimitError, readAiUser, requireAiUser, routeId, withAiBudget } from "../lib/ai-guard";
 
 const router = Router();
 
@@ -53,8 +54,14 @@ router.patch("/:id", async (req, res) => {
   res.json(row);
 });
 
-router.post("/:id/analyze", async (req, res) => {
-  const id = parseInt(req.params.id, 10);
+router.post("/:id/analyze", requireAiUser, async (req, res) => {
+  const user = readAiUser(res);
+  if (!user) {
+    res.status(401).json({ error: "Authentication required" });
+    return;
+  }
+
+  const id = routeId(req.params.id);
   const [anomaly] = await db.select().from(anomaliesTable).where(eq(anomaliesTable.id, id));
   if (!anomaly) { res.status(404).json({ error: "Not found" }); return; }
 
@@ -79,13 +86,28 @@ Provide a concise, professional deep-dive analysis covering:
 
 Be direct and actionable. Use audit terminology consistent with ISA 315 and ISA 240.`;
 
-  const message = await anthropic.messages.create({
-    model: "claude-opus-4-5",
-    max_tokens: 1024,
-    messages: [{ role: "user", content: prompt }],
-  });
-
-  const analysis = message.content[0].type === "text" ? message.content[0].text : "";
+  let analysis: string;
+  try {
+    analysis = await withAiBudget(user.staffId, 2048, async () => {
+      const message = await anthropic.messages.create({
+        model: "claude-opus-4-5",
+        max_tokens: 1024,
+        messages: [{ role: "user", content: prompt }],
+      });
+      const text = message.content[0].type === "text" ? message.content[0].text : "";
+      return {
+        value: text,
+        inputTokens: message.usage?.input_tokens ?? 0,
+        outputTokens: message.usage?.output_tokens ?? 0,
+      };
+    });
+  } catch (err) {
+    if (err instanceof AiLimitError) {
+      res.status(429).json({ error: err.message });
+      return;
+    }
+    throw err;
+  }
 
   const updatedExplanation = anomaly.aiExplanation
     ? `${anomaly.aiExplanation}\n\n---\n\nDeep-dive Analysis:\n${analysis}`

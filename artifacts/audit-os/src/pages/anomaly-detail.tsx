@@ -89,6 +89,9 @@ export default function AnomalyDetailPage() {
             </Button>
           </CardHeader>
           <CardContent>
+            {analyzeMutation.isError ? (
+              <p className="text-sm text-destructive mb-3">{analyzeMutation.error.message}</p>
+            ) : null}
             {anomaly.aiExplanation ? (
               <div className="prose prose-sm dark:prose-invert">
                 <p>{anomaly.aiExplanation}</p>

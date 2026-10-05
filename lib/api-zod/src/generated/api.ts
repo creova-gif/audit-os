@@ -572,6 +572,18 @@ export const ListWorkingPapersResponseItem = zod.object({
   title: zod.string(),
   aiDrafted: zod.boolean(),
   contentText: zod.string().nullish(),
+  aiDraftText: zod
+    .string()
+    .nullish()
+    .describe(
+      "Template-only draft. Not audit evidence and not the working paper body.",
+    ),
+  aiDraftStatus: zod
+    .string()
+    .nullish()
+    .describe(
+      "pending_review or accepted. Acceptance does not copy the draft into contentText.",
+    ),
   status: zod.string(),
   preparedBy: zod.number().nullish(),
   preparedAt: zod.string().nullish(),
@@ -613,6 +625,18 @@ export const GetWorkingPaperResponse = zod.object({
   title: zod.string(),
   aiDrafted: zod.boolean(),
   contentText: zod.string().nullish(),
+  aiDraftText: zod
+    .string()
+    .nullish()
+    .describe(
+      "Template-only draft. Not audit evidence and not the working paper body.",
+    ),
+  aiDraftStatus: zod
+    .string()
+    .nullish()
+    .describe(
+      "pending_review or accepted. Acceptance does not copy the draft into contentText.",
+    ),
   status: zod.string(),
   preparedBy: zod.number().nullish(),
   preparedAt: zod.string().nullish(),
@@ -651,6 +675,18 @@ export const UpdateWorkingPaperResponse = zod.object({
   title: zod.string(),
   aiDrafted: zod.boolean(),
   contentText: zod.string().nullish(),
+  aiDraftText: zod
+    .string()
+    .nullish()
+    .describe(
+      "Template-only draft. Not audit evidence and not the working paper body.",
+    ),
+  aiDraftStatus: zod
+    .string()
+    .nullish()
+    .describe(
+      "pending_review or accepted. Acceptance does not copy the draft into contentText.",
+    ),
   status: zod.string(),
   preparedBy: zod.number().nullish(),
   preparedAt: zod.string().nullish(),
@@ -663,14 +699,93 @@ export const UpdateWorkingPaperResponse = zod.object({
 });
 
 /**
- * @summary AI-draft content for a working paper
+ * Writes a blank template to aiDraftText. Does not call a model and does not modify contentText.
+ * @summary Store a template-only working paper draft for reviewer acceptance
  */
 export const DraftWorkingPaperParams = zod.object({
   id: zod.coerce.number(),
 });
 
 export const DraftWorkingPaperResponse = zod.object({
-  content: zod.string(),
+  content: zod
+    .string()
+    .describe(
+      "Template-only draft stored in aiDraftText. Not written to contentText.",
+    ),
+  aiDraftText: zod.string(),
+  aiDraftStatus: zod.string(),
+  requiresReviewerAcceptance: zod.boolean(),
+  updatedPaper: zod
+    .object({
+      id: zod.number(),
+      engagementId: zod.number(),
+      wpRef: zod.string(),
+      section: zod.string(),
+      title: zod.string(),
+      aiDrafted: zod.boolean(),
+      contentText: zod.string().nullish(),
+      aiDraftText: zod
+        .string()
+        .nullish()
+        .describe(
+          "Template-only draft. Not audit evidence and not the working paper body.",
+        ),
+      aiDraftStatus: zod
+        .string()
+        .nullish()
+        .describe(
+          "pending_review or accepted. Acceptance does not copy the draft into contentText.",
+        ),
+      status: zod.string(),
+      preparedBy: zod.number().nullish(),
+      preparedAt: zod.string().nullish(),
+      reviewedBy: zod.number().nullish(),
+      reviewedAt: zod.string().nullish(),
+      signedOffBy: zod.number().nullish(),
+      signedOffAt: zod.string().nullish(),
+      createdAt: zod.coerce.date(),
+      updatedAt: zod.coerce.date(),
+    })
+    .optional(),
+});
+
+/**
+ * Marks aiDraftStatus accepted for an active partner or manager. Does not copy aiDraftText into contentText.
+ * @summary Record reviewer acceptance of a template draft
+ */
+export const AcceptWorkingPaperDraftParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const AcceptWorkingPaperDraftResponse = zod.object({
+  id: zod.number(),
+  engagementId: zod.number(),
+  wpRef: zod.string(),
+  section: zod.string(),
+  title: zod.string(),
+  aiDrafted: zod.boolean(),
+  contentText: zod.string().nullish(),
+  aiDraftText: zod
+    .string()
+    .nullish()
+    .describe(
+      "Template-only draft. Not audit evidence and not the working paper body.",
+    ),
+  aiDraftStatus: zod
+    .string()
+    .nullish()
+    .describe(
+      "pending_review or accepted. Acceptance does not copy the draft into contentText.",
+    ),
+  status: zod.string(),
+  preparedBy: zod.number().nullish(),
+  preparedAt: zod.string().nullish(),
+  reviewedBy: zod.number().nullish(),
+  reviewedAt: zod.string().nullish(),
+  signedOffBy: zod.number().nullish(),
+  signedOffAt: zod.string().nullish(),
+  createdAt: zod.coerce.date(),
+  updatedAt: zod.coerce.date(),
 });
 
 /**

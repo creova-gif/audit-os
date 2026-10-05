@@ -362,6 +362,8 @@ paths:
       operationId: analyzeAnomaly
       tags: [ai]
       summary: AI deep-dive analysis of an anomaly
+      security:
+        - bearerAuth: []
       parameters:
         - name: id
           in: path
@@ -375,8 +377,20 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/AiAnalysisResult"
+        "401":
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "404":
           description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "429":
+          description: Rate limit or token budget exceeded
           content:
             application/json:
               schema:
@@ -572,7 +586,10 @@ paths:
     post:
       operationId: draftWorkingPaper
       tags: [ai]
-      summary: AI-draft content for a working paper
+      summary: Store a template-only working paper draft for reviewer acceptance
+      description: Writes a blank template to aiDraftText. Does not call a model and does not modify contentText.
+      security:
+        - bearerAuth: []
       parameters:
         - name: id
           in: path
@@ -581,13 +598,83 @@ paths:
             type: integer
       responses:
         "200":
-          description: AI drafted content
+          description: Template draft stored separately from the working paper body
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/AiDraftResult"
+        "401":
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "404":
           description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          description: Draft prompt or output claimed evidence
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "429":
+          description: Rate limit or token budget exceeded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /working-papers/{id}/draft/accept:
+    post:
+      operationId: acceptWorkingPaperDraft
+      tags: [ai]
+      summary: Record reviewer acceptance of a template draft
+      description: Marks aiDraftStatus accepted for an active partner or manager. Does not copy aiDraftText into contentText.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Working paper with the draft marked accepted. contentText is unchanged.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkingPaper"
+        "401":
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Reviewer role required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: No draft to accept
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          description: Draft asserts evidence and cannot be accepted
           content:
             application/json:
               schema:
@@ -662,6 +749,11 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
 
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: HMAC bearer token for AI routes, signed with SESSION_SECRET.
   schemas:
     HealthStatus:
       type: object
@@ -1183,6 +1275,12 @@ components:
           type: boolean
         contentText:
           type: ["string", "null"]
+        aiDraftText:
+          type: ["string", "null"]
+          description: Template-only draft. Not audit evidence and not the working paper body.
+        aiDraftStatus:
+          type: ["string", "null"]
+          description: pending_review or accepted. Acceptance does not copy the draft into contentText.
         status:
           type: string
         preparedBy:
@@ -1262,8 +1360,20 @@ components:
       properties:
         content:
           type: string
+          description: Template-only draft stored in aiDraftText. Not written to contentText.
+        aiDraftText:
+          type: string
+        aiDraftStatus:
+          type: string
+        requiresReviewerAcceptance:
+          type: boolean
+        updatedPaper:
+          $ref: "#/components/schemas/WorkingPaper"
       required:
         - content
+        - aiDraftText
+        - aiDraftStatus
+        - requiresReviewerAcceptance
 
     DataRoomItem:
       type: object

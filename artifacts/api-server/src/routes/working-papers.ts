@@ -1,9 +1,30 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
-import { workingPapersTable, engagementsTable, clientsTable } from "@workspace/db/schema";
+import { workingPapersTable, engagementsTable, clientsTable, staffTable } from "@workspace/db/schema";
 import { eq, and } from "drizzle-orm";
 import { CreateWorkingPaperBody, UpdateWorkingPaperBody } from "@workspace/api-zod";
-import { anthropic } from "@workspace/integrations-anthropic-ai";
+import {
+  AiLimitError,
+  assertAiAllowance,
+  canAcceptDraft,
+  readAiUser,
+  requireAiUser,
+  routeId,
+} from "../lib/ai-guard";
+import {
+  assertPatchLeavesContentUntouched,
+  assertsAuditEvidence,
+  DraftIntegrityError,
+  handleWorkingPaperDraft,
+  type ModelClient,
+  workingPaperAcceptPatch,
+} from "../lib/working-paper-draft";
+
+const heldModel: ModelClient = {
+  async create() {
+    throw new Error("Working-paper model draft is held");
+  },
+};
 
 const router = Router();
 
@@ -47,10 +68,26 @@ router.patch("/:id", async (req, res) => {
   res.json(row);
 });
 
-router.post("/:id/draft", async (req, res) => {
-  const id = parseInt(req.params.id, 10);
+router.post("/:id/draft", requireAiUser, async (req, res) => {
+  const user = readAiUser(res);
+  if (!user) {
+    res.status(401).json({ error: "Authentication required" });
+    return;
+  }
+
+  const id = routeId(req.params.id);
   const [wp] = await db.select().from(workingPapersTable).where(eq(workingPapersTable.id, id));
   if (!wp) { res.status(404).json({ error: "Not found" }); return; }
+
+  try {
+    assertAiAllowance(user.staffId, 0);
+  } catch (err) {
+    if (err instanceof AiLimitError) {
+      res.status(429).json({ error: err.message });
+      return;
+    }
+    throw err;
+  }
 
   const [engagement] = wp.engagementId
     ? await db
@@ -60,38 +97,70 @@ router.post("/:id/draft", async (req, res) => {
         .where(eq(engagementsTable.id, wp.engagementId))
     : [null];
 
-  const prompt = `You are an experienced audit manager drafting a working paper for an external audit engagement.
+  try {
+    const draft = await handleWorkingPaperDraft({
+      paper: wp,
+      engagementName: engagement?.name || "Unknown",
+      clientName: engagement?.clientName || "Unknown",
+      model: heldModel,
+    });
+    assertPatchLeavesContentUntouched(draft.patch);
+    const [updated] = await db.update(workingPapersTable)
+      .set(draft.patch)
+      .where(eq(workingPapersTable.id, id))
+      .returning();
+    res.json({
+      content: draft.aiDraftText,
+      aiDraftText: draft.aiDraftText,
+      aiDraftStatus: draft.aiDraftStatus,
+      requiresReviewerAcceptance: true,
+      updatedPaper: updated,
+    });
+  } catch (err) {
+    if (err instanceof DraftIntegrityError) {
+      res.status(422).json({ error: err.message });
+      return;
+    }
+    throw err;
+  }
+});
 
-Working Paper Details:
-- Reference: ${wp.wpRef}
-- Title: ${wp.title}
-- Section: ${wp.section}
-- Engagement: ${engagement?.name || "Unknown"} (${engagement?.type || ""})
-- Client: ${engagement?.clientName || "Unknown"}
-- Existing Content: ${wp.contentText || "None"}
+router.post("/:id/draft/accept", requireAiUser, async (req, res) => {
+  const user = readAiUser(res);
+  if (!user) {
+    res.status(401).json({ error: "Authentication required" });
+    return;
+  }
 
-Draft a professional, ISA-compliant working paper for this audit section. The paper should include:
-1. Objective / Purpose
-2. Audit procedures performed
-3. Evidence obtained / results
-4. Conclusion
+  const id = routeId(req.params.id);
+  const [staff] = await db.select().from(staffTable).where(eq(staffTable.id, user.staffId));
+  if (!staff || !canAcceptDraft(staff.role, staff.isActive)) {
+    res.status(403).json({ error: "Reviewer acceptance requires an active partner or manager" });
+    return;
+  }
 
-Use Tanzania NBAA and IAASB standards as applicable. Be concise but thorough. Use professional audit language.`;
+  const [wp] = await db.select().from(workingPapersTable).where(eq(workingPapersTable.id, id));
+  if (!wp) { res.status(404).json({ error: "Not found" }); return; }
+  if (!wp.aiDraftText) {
+    res.status(409).json({ error: "No draft to accept" });
+    return;
+  }
+  if (assertsAuditEvidence(wp.aiDraftText)) {
+    res.status(422).json({ error: "Draft asserts evidence and cannot be accepted" });
+    return;
+  }
+  if (wp.aiDraftStatus === "accepted") {
+    res.json(wp);
+    return;
+  }
 
-  const message = await anthropic.messages.create({
-    model: "claude-opus-4-5",
-    max_tokens: 2048,
-    messages: [{ role: "user", content: prompt }],
-  });
-
-  const content = message.content[0].type === "text" ? message.content[0].text : "";
-
+  const patch = workingPaperAcceptPatch(staff.id, new Date().toISOString().slice(0, 10));
+  assertPatchLeavesContentUntouched(patch);
   const [updated] = await db.update(workingPapersTable)
-    .set({ contentText: content, aiDrafted: true })
+    .set(patch)
     .where(eq(workingPapersTable.id, id))
     .returning();
-
-  res.json({ content, updatedPaper: updated });
+  res.json(updated);
 });
 
 export default router;
