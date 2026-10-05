@@ -1,17 +1,28 @@
-# CLAUDE.md — audit-os
+## gstack (REQUIRED — global install)
 
-## Project Overview
-Compliance/audit monorepo (pnpm workspace).
+**Before doing ANY work, verify gstack is installed:**
 
-## Technology Stack
-pnpm workspace monorepo. Use `pnpm install --frozen-lockfile` and `pnpm build` — never `npm`/`yarn` commands, which will not respect the workspace structure.
+```bash
+_GS=""
+for _D in "${GSTACK_ROOT:-}" "$HOME/.claude/skills/gstack" "$HOME/.codex/skills/gstack" "$HOME/.factory/skills/gstack" "$HOME/.kiro/skills/gstack" "$HOME/.config/opencode/skills/gstack" "$HOME/.slate/skills/gstack" "$HOME/.cursor/skills/gstack" "$HOME/.openclaw/skills/gstack" "$HOME/.hermes/skills/gstack" "$HOME/.gbrain/skills/gstack" "$HOME/.copilot/skills/gstack" "$HOME/.gstack/repos/gstack"; do
+  [ -z "$_GS" ] && [ -n "$_D" ] && [ -d "$_D/bin" ] && _GS="$_D"
+done
+[ -n "$_GS" ] && echo "GSTACK_OK: $_GS" || echo "GSTACK_MISSING"
+```
 
-## CI
-`pnpm install --frozen-lockfile && pnpm build`.
+If GSTACK_MISSING: STOP. Do not proceed. Tell the user:
 
-## AI Agent Rules
-- Before adding a dependency, check which workspace package actually needs it — add it to that package's `package.json`, not the root, unless it's a genuine dev-tooling dependency shared by all packages.
-- This repo has not had a full security/architecture audit in this engagement — do not assume its backend/auth patterns match other repos in this portfolio without checking directly.
+> gstack is required for all AI-assisted work in this repo.
+> Install it:
+> ```bash
+> git clone --depth 1 https://github.com/garrytan/gstack.git ~/.claude/skills/gstack
+> cd ~/.claude/skills/gstack && ./setup --team
+> ```
+> Then restart your AI coding tool.
 
-## Definition of Done
-`pnpm build` passes across the whole workspace, not just the package you touched.
+Do not skip skills, ignore gstack errors, or work around missing gstack.
+
+Using gstack skills: After install, skills like /qa, /ship, /review, /investigate,
+and /browse are available. Use /browse for all web browsing (Aside first, the bundled gstack browser as fallback).
+Use the resolved install path above for gstack file paths
+(default: ~/.claude/skills/gstack).
