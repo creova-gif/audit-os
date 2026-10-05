@@ -5,66 +5,51 @@
 [![Status](https://img.shields.io/badge/status-active_development-yellow)]()
 [![License](https://img.shields.io/badge/license-proprietary-red)]()
 
----
+## Overview
+Workflow tooling for audit and accounting firms, comparable in scope to CaseWare/AuditBoard.
 
-## What this is
+## Problem
+Smaller audit/accounting firms are priced out of enterprise engagement-management platforms and fall back to spreadsheets and email for working papers and client document exchange.
 
-Audit OS gives audit and accounting firms the workflow tooling that larger platforms (CaseWare, AuditBoard) offer, structured around how an engagement actually runs: client intake, staff assignment, working papers, findings, and anomaly detection, with a secure data room for client document exchange.
+## Solution
+Engagement tracking from kickoff to sign-off, working papers, findings tracking, anomaly detection, and a secure client data room, structured around how an audit engagement actually runs.
 
----
+## Key Capabilities
+- Engagements, clients, staff assignment and workload
+- Working papers and findings tracking
+- Anomaly detection on client data
+- Secure client data room
 
-## Core Features
+## Architecture
+Node.js, pnpm monorepo. `artifacts/api-server` is the real backend.
 
-- **Engagements** — track each audit engagement from kickoff to sign-off
-- **Clients** — client records and relationship management
-- **Data room** — secure document exchange with clients
-- **Working papers** — the actual audit workpaper trail
-- **Findings** — tracked audit findings and their resolution status
-- **Anomaly detection** — automated flagging of unusual patterns in client data
-- **Staff** — team assignment and workload across engagements
-
----
-
-## Tech Stack
+## Technology Stack
 
 | Layer | Technology |
 |---|---|
-| Backend | Node.js, pnpm monorepo |
-| Architecture | API server (`artifacts/api-server`) |
+| Monorepo | pnpm workspaces |
+| Backend | Node.js (`artifacts/api-server`) |
 
----
-
-## Getting Started (Local Dev)
-
-### Prerequisites
-- Node.js 18+
-- **pnpm** (enforced via preinstall check — npm/yarn installs are blocked)
-
-### Installation
-
+## Getting Started
 ```bash
 git clone https://github.com/creova-gif/audit-os.git
 cd audit-os
 pnpm install
 pnpm run build
 ```
+Run locally: `pnpm --filter @workspace/audit-os run dev` and `pnpm --filter @workspace/api-server run dev`.
 
-Run the app locally with `pnpm --filter @workspace/audit-os run dev` and the API server with `pnpm --filter @workspace/api-server run dev`.
+## Project Status
+Core routes implemented (engagements, clients, findings, working papers, anomalies, staff, data room). No dedicated `.env.example` or onboarding docs yet.
 
----
-
-## Roadmap / Status
-
-Core routes are implemented (engagements, clients, findings, working papers, anomalies, staff, data room). A `.env.example` and local dev-server run instructions should be added for onboarding.
+## Roadmap
+- [ ] Add `.env.example` and local dev-server onboarding instructions
 
 ## Contributing
-
-This is a private, proprietary CREOVA product. External contributions are not accepted at this time.
+Private, proprietary CREOVA product.
 
 ## License
-
 Proprietary — All Rights Reserved. See `LICENSE`.
 
-## Credits
-
-Built by CREOVA. Product lead: Justin Mafie.
+## Author / Organization
+Built by [Justin Mafie](https://github.com/creova-gif) under CREOVA.
