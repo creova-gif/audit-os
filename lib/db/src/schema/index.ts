@@ -5,3 +5,7 @@ export * from "./anomalies";
 export * from "./findings";
 export * from "./working-papers";
 export * from "./data-room";
+export * from "./conversations";
+export * from "./messages";
+export * from "./ledger-ingestion-jobs";
+export * from "./portal-access-tokens";

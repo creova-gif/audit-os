@@ -10,13 +10,14 @@ export const workingPapersTable = pgTable("working_papers", {
   title: text("title").notNull(),
   aiDrafted: boolean("ai_drafted").notNull().default(false),
   contentText: text("content_text"),
-  status: text("status").notNull().default("draft"),
+  status: text("status").notNull().default("draft"), // 'draft' | 'in_review' | 'signed_off'
   preparedBy: integer("prepared_by"),
   preparedAt: text("prepared_at"),
   reviewedBy: integer("reviewed_by"),
   reviewedAt: text("reviewed_at"),
   signedOffBy: integer("signed_off_by"),
   signedOffAt: text("signed_off_at"),
+  signedOffHash: text("signed_off_hash"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });

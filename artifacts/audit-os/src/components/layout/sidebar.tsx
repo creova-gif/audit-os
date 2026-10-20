@@ -6,18 +6,22 @@ import {
   Search, 
   FileText, 
   Users, 
-  FolderOpen 
+  FolderOpen,
+  FileSpreadsheet,
+  Globe
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Dashboard", icon: BarChart3 },
   { href: "/engagements", label: "Engagements", icon: Briefcase },
+  { href: "/ledger-ingestion", label: "Ledger Fieldwork", icon: FileSpreadsheet },
   { href: "/anomalies", label: "Anomalies", icon: AlertTriangle },
   { href: "/findings", label: "Findings", icon: Search },
   { href: "/working-papers", label: "Working Papers", icon: FileText },
   { href: "/clients", label: "Clients", icon: Users },
   { href: "/data-room", label: "Data Room", icon: FolderOpen },
+  { href: "/client-portal", label: "Client Portal", icon: Globe },
 ];
 
 export function Sidebar() {
@@ -51,16 +55,8 @@ export function Sidebar() {
           );
         })}
       </nav>
-      <div className="p-4 border-t border-sidebar-border">
-        <div className="flex items-center gap-3 px-3 py-2">
-          <div className="w-8 h-8 rounded-full bg-sidebar-primary flex items-center justify-center text-sidebar-primary-foreground font-semibold text-xs">
-            AP
-          </div>
-          <div>
-            <p className="text-sm font-medium text-white">Audit Partner</p>
-            <p className="text-xs text-slate-400">Partner</p>
-          </div>
-        </div>
+      <div className="p-4 border-t border-sidebar-border text-xs text-slate-400">
+        Practice Management v1.0
       </div>
     </aside>
   );

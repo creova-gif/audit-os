@@ -13,6 +13,7 @@ export const anomaliesTable = pgTable("gl_anomalies", {
   transactionDate: text("transaction_date"),
   amount: doublePrecision("amount"),
   description: text("description"),
+  detectionMethod: text("detection_method").notNull().default("deterministic"), // 'deterministic' | 'ai_synthesis'
   aiExplanation: text("ai_explanation"),
   auditorStatus: text("auditor_status").notNull().default("unreviewed"),
   auditorNotes: text("auditor_notes"),

@@ -17,6 +17,8 @@ import WorkingPaperDetailPage from "@/pages/working-paper-detail";
 import ClientsPage from "@/pages/clients";
 import ClientDetailPage from "@/pages/client-detail";
 import DataRoomPage from "@/pages/data-room";
+import LedgerIngestionPage from "@/pages/ledger-ingestion";
+import ClientPortalPage from "@/pages/client-portal";
 
 const queryClient = new QueryClient();
 
@@ -43,6 +45,8 @@ function Router() {
         <Route path="/clients/:id" component={ClientDetailPage} />
         
         <Route path="/data-room" component={DataRoomPage} />
+        <Route path="/ledger-ingestion" component={LedgerIngestionPage} />
+        <Route path="/client-portal" component={ClientPortalPage} />
 
         <Route component={NotFound} />
       </Switch>
