@@ -42,8 +42,19 @@ router.patch("/:id", async (req, res) => {
     res.status(400).json({ error: parsed.error.message });
     return;
   }
+
+  const [existing] = await db.select().from(workingPapersTable).where(eq(workingPapersTable.id, id));
+  if (!existing) {
+    res.status(404).json({ error: "Not found" });
+    return;
+  }
+
+  if (existing.status === "signed_off") {
+    res.status(403).json({ error: "Working paper is locked by partner sign-off." });
+    return;
+  }
+
   const [row] = await db.update(workingPapersTable).set(parsed.data).where(eq(workingPapersTable.id, id)).returning();
-  if (!row) { res.status(404).json({ error: "Not found" }); return; }
   res.json(row);
 });
 
@@ -51,6 +62,11 @@ router.post("/:id/draft", async (req, res) => {
   const id = parseInt(req.params.id, 10);
   const [wp] = await db.select().from(workingPapersTable).where(eq(workingPapersTable.id, id));
   if (!wp) { res.status(404).json({ error: "Not found" }); return; }
+
+  if (wp.status === "signed_off") {
+    res.status(403).json({ error: "Working paper is locked by partner sign-off." });
+    return;
+  }
 
   const [engagement] = wp.engagementId
     ? await db
